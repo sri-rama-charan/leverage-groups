@@ -1,0 +1,13 @@
+/* 
+  Tailwind CSS Directives 
+  These inject the Tailwind styles into our app.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Global Styles */
+body {
+  background-color: #0f172a; /* Slate 900 */
+  color: #f8fafc; /* Slate 50 */
+}

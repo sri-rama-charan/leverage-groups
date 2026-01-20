@@ -1,0 +1,38 @@
+version: "3.8"
+
+# Services define the containers we want to run
+services:
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  # why: This is our main database to store Users, Groups, etc.
+  postgres:
+    image: postgres:15-alpine # Lightweight version of Postgres 15
+    container_name: leverage_groups_db
+    ports:
+      - "5433:5432" # Expose port 5433 to localhost (avoiding conflict)
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=leverage_groups
+    volumes:
+      # Persist data so we don't lose it when restarting containers
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  # ==========================================
+  # Redis Cache / Queue
+  # ==========================================
+  # why: We need this for managing background jobs (like sending WhatsApp messages)
+  # or caching data to make the app faster.
+  redis:
+    image: redis:alpine
+    container_name: leverage_groups_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+# Define named volumes for persistence
+volumes:
+  postgres_data:
+    driver: local

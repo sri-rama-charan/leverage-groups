@@ -1,0 +1,66 @@
+# ==============================================================================
+# Dependency Directories
+# ==============================================================================
+# node_modules: Contains all the external libraries we install (huge folder!).
+# We never push this to Git because it can be re-installed via 'npm install'.
+node_modules/
+
+# ==============================================================================
+# Build Outputs
+# ==============================================================================
+# dist: "Distribution". This is where the minimized/optimized production code goes.
+# We don't push this because it's generated code.
+dist/
+build/
+out/
+
+# ==============================================================================
+# Environment Variables (Security Critical!)
+# ==============================================================================
+# .env files contain secrets (API keys, Database passwords).
+# NEVER push these to Git. We typically share a '.env.example' instead.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==============================================================================
+# IDE & Editor Settings
+# ==============================================================================
+# Settings specific to your computer/editor (VS Code, WebStorm, etc.)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================================================================
+# System Files
+# ==============================================================================
+# Files created by the Operating System (Mac/Windows)
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# ==============================================================================
+# Logs
+# ==============================================================================
+# Error logs if something crashes
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==============================================================================
+# Nx (Monorepo Tool)
+# ==============================================================================
+# Nx cache and temporary files
+.nx/
+
+# ==============================================================================
+# Client / Vite Specific
+# ==============================================================================
+dist-ssr
+*.local
+*.ntvs*
+*.njsproj
+*.sln

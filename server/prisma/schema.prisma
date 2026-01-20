@@ -1,0 +1,342 @@
+// ==========================================
+// PRISMA SCHEMA FOR LEVERAGE GROUPS (SAAS)
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------
+// 1. USERS
+// ------------------------------------------
+
+enum UserRole {
+  GA // Group Admin
+  BR // Brand
+  PA // Platform Admin
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id             String     @id @default(uuid())
+  role           UserRole
+  name           String
+  email          String     @unique
+  phone          String     @unique
+  
+  // Verification
+  emailVerified  Boolean    @default(false) @map("email_verified")
+  phoneVerified  Boolean    @default(false) @map("phone_verified")
+  
+  passwordHash   String?    @map("password_hash")
+  status         UserStatus @default(ACTIVE)
+  
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  // Relationships
+  whatsappSessions  WhatsappSession[]
+  ownedGroups       Group[]            @relation("GroupAdmin")
+  verifications     GroupAdminVerification[]
+  wallets           Wallet[]
+  campaigns         Campaign[]
+  earnings          Earning[]
+  
+  @@map("users")
+}
+
+// ------------------------------------------
+// 2. WHATSAPP SESSIONS (Scraper)
+// ------------------------------------------
+
+enum SessionStatus {
+  IDLE
+  QR_READY
+  AUTHENTICATED
+  DISCONNECTED
+}
+
+model WhatsappSession {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  sessionName    String    @map("session_name")
+  status         SessionStatus @default(IDLE)
+  
+  qrGeneratedAt  DateTime? @map("qr_generated_at")
+  authenticatedAt DateTime? @map("authenticated_at")
+  
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("whatsapp_sessions")
+}
+
+// ------------------------------------------
+// 3. WHATSAPP GROUPS
+// ------------------------------------------
+
+enum GroupVerificationStatus {
+  PENDING
+  SCRAPED
+  VERIFIED
+  FAILED
+}
+
+model Group {
+  id                  String   @id @default(uuid())
+  adminId             String   @map("admin_id")
+  admin               User     @relation("GroupAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+  
+  groupName           String   @map("group_name")
+  inviteLink          String   @map("invite_link")
+  
+  // Pricing & Stats
+  pricePerMessage     Decimal  @map("price_per_message") @db.Decimal(10, 2)
+  scrapedMemberCount  Int?     @map("scraped_member_count")
+  
+  verificationStatus  GroupVerificationStatus @default(PENDING) @map("verification_status")
+  monetizationEnabled Boolean  @default(false) @map("monetization_enabled")
+  
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relationships
+  members             GroupMember[]
+  adminVerifications  GroupAdminVerification[]
+  campaigns           CampaignGroup[]
+  messages            Message[]
+  earnings            Earning[]
+  optOutRequests      OptOutRequest[]
+
+  @@map("groups")
+}
+
+// ------------------------------------------
+// 4. GROUP MEMBERS (Scraped)
+// ------------------------------------------
+
+model GroupMember {
+  id                String   @id @default(uuid())
+  groupId           String   @map("group_id")
+  group             Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  phone             String
+  isAdmin           Boolean  @default(false) @map("is_admin")
+  isSuperAdmin      Boolean  @default(false) @map("is_super_admin")
+  optOut            Boolean  @default(false) @map("opt_out")
+  
+  lastMessageDate   DateTime? @map("last_message_date") @db.Date
+  dailyMessageCount Int       @default(0) @map("daily_message_count")
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([groupId, phone])
+  @@map("group_members")
+}
+
+// ------------------------------------------
+// 5. ADMIN VERIFICATION
+// ------------------------------------------
+
+enum VerificationMethod {
+  SCRAPED_ADMIN_MATCH
+}
+
+model GroupAdminVerification {
+  id              String   @id @default(uuid())
+  groupId         String   @map("group_id")
+  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  verified        Boolean  @default(false)
+  verificationMethod VerificationMethod @map("verification_method")
+  
+  verifiedAt      DateTime? @map("verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@unique([groupId, userId])
+  @@map("group_admin_verification")
+}
+
+// ------------------------------------------
+// 6. WALLETS (Brand)
+// ------------------------------------------
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  balance   Decimal  @default(0) @db.Decimal(12, 2)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relationships
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+// ------------------------------------------
+// 7. WALLET TRANSACTIONS
+// ------------------------------------------
+
+enum TransactionType {
+  TOPUP
+  DEBIT
+  CREDIT
+  REFUND
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  walletId    String   @map("wallet_id")
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  type        TransactionType
+  amount      Decimal  @db.Decimal(10, 2)
+  referenceId String?  @map("reference_id") // Razorpay or Campaign ID
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("wallet_transactions")
+}
+
+// ------------------------------------------
+// 8. CAMPAIGNS
+// ------------------------------------------
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Campaign {
+  id                 String   @id @default(uuid())
+  brandId            String   @map("brand_id")
+  brand              User     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  
+  name               String
+  messagePayload     Json     @map("message_payload") // JSONB
+  status             CampaignStatus @default(DRAFT)
+  
+  scheduledAt        DateTime? @map("scheduled_at")
+  platformFeePercent Decimal   @map("platform_fee_percent") @db.Decimal(5, 2)
+  
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  groups    CampaignGroup[]
+  messages  Message[]
+  earnings  Earning[]
+
+  @@map("campaigns")
+}
+
+// ------------------------------------------
+// 9. CAMPAIGN <-> GROUPS (Many-to-Many)
+// ------------------------------------------
+
+model CampaignGroup {
+  campaignId String   @map("campaign_id")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  groupId    String   @map("group_id")
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, groupId])
+  @@map("campaign_groups")
+}
+
+// ------------------------------------------
+// 10. MESSAGE DELIVERY
+// ------------------------------------------
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  campaignId String   @map("campaign_id")
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  groupId    String   @map("group_id")
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  phone      String
+  status     MessageStatus @default(PENDING)
+  
+  sentAt     DateTime? @map("sent_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([campaignId, phone])
+  @@map("messages")
+}
+
+// ------------------------------------------
+// 11. REVENUE / EARNINGS
+// ------------------------------------------
+
+model Earning {
+  id             String   @id @default(uuid())
+  groupId        String   @map("group_id")
+  group          Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  adminId        String   @map("admin_id")
+  admin          User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  campaignId     String   @map("campaign_id")
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  adminAmount    Decimal? @map("admin_amount") @db.Decimal(10, 2)
+  platformAmount Decimal? @map("platform_amount") @db.Decimal(10, 2)
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("earnings")
+}
+
+// ------------------------------------------
+// 12. OPT-OUT REQUESTS
+// ------------------------------------------
+
+enum OptOutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model OptOutRequest {
+  id        String   @id @default(uuid())
+  groupId   String   @map("group_id")
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  phone     String
+  status    OptOutStatus @default(PENDING)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("opt_out_requests")
+}
