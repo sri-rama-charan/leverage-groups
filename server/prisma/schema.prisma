@@ -28,14 +28,18 @@ enum UserStatus {
 
 model User {
   id             String     @id @default(uuid())
-  role           UserRole
+  role           UserRole?
   name           String
-  email          String     @unique
+  email          String?    @unique // Email might be collected later or optional initially
   phone          String     @unique
   
   // Verification
   emailVerified  Boolean    @default(false) @map("email_verified")
   phoneVerified  Boolean    @default(false) @map("phone_verified")
+  
+  // OTP Fields
+  otpCode        String?    @map("otp_code")
+  otpExpiresAt   DateTime?  @map("otp_expires_at")
   
   passwordHash   String?    @map("password_hash")
   status         UserStatus @default(ACTIVE)

@@ -25,6 +25,10 @@ app.use(helmet());
 // Log requests to the terminal
 app.use(morgan("dev"));
 
+// 4. Define Routes (The "Men" of our restaurant)
+const authRoutes = require("./routes/authRoutes");
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
   res.send({ message: "LeverageGroups API is Running 🚀" });
 });
