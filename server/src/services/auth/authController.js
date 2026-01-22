@@ -13,59 +13,67 @@ const { generateToken } = require("../../utils/jwtUtils");
 // Connect to the Database
 const prisma = new PrismaClient();
 
+const { sendEmailOtp } = require("../../utils/emailUtils");
+
 /**
  * STEP 1: INITIATE REGISTRATION
- * User sends: { name, phone, password }
+ * User sends: { name, email, phone, password }
  * We do:
- * 1. Check if phone exists (Error if yes).
- * 2. Hash the password (Make it secure).
- * 3. Generate a magical 6-digit OTP (Mock for now).
- * 4. Save user as "UNVERIFIED" in database.
+ * 1. Check if phone/email exists.
+ * 2. Hash password.
+ * 3. Generate OTP & Send via Email.
+ * 4. Save user as "UNVERIFIED".
  */
 const initiateRegister = async (req, res) => {
   try {
-    // 1. Get data from the "Order" (Request Body)
-    const { name, phone, password } = req.body;
+    // 1. Get data from Request
+    const { name, email, phone, password } = req.body;
 
-    // 2. Check if this phone number is already used
-    const existingUser = await prisma.user.findUnique({ where: { phone } });
-    if (existingUser) {
+    // 2. Check duplicates
+    const existingPhone = await prisma.user.findUnique({ where: { phone } });
+    if (existingPhone)
       return res
         .status(400)
         .json({ error: "Phone number already registered!" });
+
+    if (email) {
+      const existingEmail = await prisma.user.findUnique({ where: { email } });
+      if (existingEmail)
+        return res.status(400).json({ error: "Email already registered!" });
     }
 
     // 3. Secure the password
     const hashedPassword = await hashPassword(password);
 
-    // 4. Create a Fake OTP (In real life, we would text this)
-    const mockOtp = "123456";
-    // Set expiry to 10 minutes from now
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    // 4. Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-    // 5. Save the user to the "Kitchen" (Database)
-    // We don't ask for Role yet. Role comes in Step 3.
+    // 5. Send Email (Fail fast if email is bad)
+    await sendEmailOtp(email, otp);
+
+    // 6. Save User
     const newUser = await prisma.user.create({
       data: {
         name,
+        email,
         phone,
         passwordHash: hashedPassword,
-        otpCode: mockOtp,
+        otpCode: otp,
         otpExpiresAt: otpExpires,
-        phoneVerified: false, // NOT VERIFIED YET
+        phoneVerified: false,
       },
     });
 
-    console.log(`[AUTH] OTP for ${phone} is ${mockOtp}`); // Log it so we can see it
+    console.log(`[AUTH] User created: ${name}. Waiting for OTP via Email.`);
 
-    // 6. Tell the user "Okay, check your phone!"
     res.status(201).json({
-      message: "OTP sent successfully! (Check console for code in dev)",
-      phone: newUser.phone, // Send back phone so frontend knows who to verify
+      message: `OTP sent to ${email}!`,
+      phone: newUser.phone,
     });
   } catch (error) {
     console.error("Initiate Register Error:", error);
-    res.status(500).json({ error: "Something went wrong in the kitchen." });
+    res.status(500).json({ error: error.message || "Something went wrong." });
   }
 };
 

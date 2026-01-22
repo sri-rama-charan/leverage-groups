@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Lock, Phone as PhoneIcon, User } from "lucide-react";
+import { ArrowRight, Lock, Phone as PhoneIcon, User, Mail } from "lucide-react";
 import api from "../api/axios";
 
 const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  // Added 'email' to state
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     phone: "",
     password: "",
   });
@@ -24,7 +26,9 @@ const Register = () => {
       console.log("Success:", response.data);
 
       // Go to Step 2 (Verify OTP), passing the phone number along
-      navigate("/verify-otp", { state: { phone: formData.phone } });
+      navigate("/verify-otp", {
+        state: { phone: formData.phone, email: formData.email },
+      });
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || "Something went wrong.");
@@ -34,10 +38,10 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gpt-dark p-4">
+    <div className="min-h-screen flex items-center justify-center bg-mvp-bg p-4">
       <div className="card animate-fade-in shadow-2xl">
         <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
-        <p className="text-gpt-sub text-center mb-8">Join LeverageGroups</p>
+        <p className="text-mvp-sub text-center mb-8">Join LeverageGroups</p>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded mb-4 text-sm text-center">
@@ -56,6 +60,20 @@ const Register = () => {
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="relative">
+            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <input
+              type="email"
+              placeholder="Email Address"
+              className="input-field pl-10"
+              required
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
               }
             />
           </div>
@@ -94,11 +112,11 @@ const Register = () => {
           </button>
         </form>
 
-        <p className="text-center text-gpt-sub text-sm mt-6">
+        <p className="text-center text-mvp-sub text-sm mt-6">
           Already have an account?{" "}
           <span
             onClick={() => navigate("/login")}
-            className="text-brand-green cursor-pointer hover:underline"
+            className="text-brand-accent cursor-pointer hover:underline"
           >
             Login
           </span>
