@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Services define the containers we want to run
 services:
   # ==========================================

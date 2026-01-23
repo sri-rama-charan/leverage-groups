@@ -103,7 +103,13 @@ model Group {
   admin               User     @relation("GroupAdmin", fields: [adminId], references: [id], onDelete: Cascade)
   
   groupName           String   @map("group_name")
+  whatsappGroupId     String   @unique @map("whatsapp_group_id") // Internal WhatsApp ID (e.g., 12345@g.us)
   inviteLink          String   @map("invite_link")
+  
+  tags                String[] // Array of strings for interest tags (PostgreSQL only)
+
+  // Messaging controls
+  dailyCap            Int      @default(1) @map("daily_cap")
   
   // Pricing & Stats
   pricePerMessage     Decimal  @map("price_per_message") @db.Decimal(10, 2)
@@ -112,6 +118,7 @@ model Group {
   verificationStatus  GroupVerificationStatus @default(PENDING) @map("verification_status")
   monetizationEnabled Boolean  @default(false) @map("monetization_enabled")
   
+  lastSyncedAt        DateTime? @map("last_synced_at")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -139,6 +146,8 @@ model GroupMember {
   isAdmin           Boolean  @default(false) @map("is_admin")
   isSuperAdmin      Boolean  @default(false) @map("is_super_admin")
   optOut            Boolean  @default(false) @map("opt_out")
+  
+  consentSource     String   @default("whatsapp_group_member") @map("consent_source")
   
   lastMessageDate   DateTime? @map("last_message_date") @db.Date
   dailyMessageCount Int       @default(0) @map("daily_message_count")

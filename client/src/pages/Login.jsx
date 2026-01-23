@@ -20,8 +20,7 @@ const Login = () => {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      alert("Login Successful!");
-      // navigate("/dashboard");
+      navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.error || "Invalid credentials.");
     } finally {
@@ -30,7 +29,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gpt-dark p-4">
+    <div className="min-h-screen flex items-center justify-center bg-mvp-bg p-4">
       <div className="card animate-fade-in">
         <h2 className="text-3xl font-bold text-center mb-8">Welcome Back</h2>
 
@@ -75,11 +74,11 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="text-center text-gpt-sub text-sm mt-6">
+        <p className="text-center text-mvp-sub text-sm mt-6">
           New here?{" "}
           <span
             onClick={() => navigate("/register")}
-            className="text-brand-green cursor-pointer hover:underline"
+            className="text-brand-accent cursor-pointer hover:underline"
           >
             Create account
           </span>

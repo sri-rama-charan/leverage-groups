@@ -8,6 +8,10 @@ import Register from "./pages/Register";
 import VerifyOtp from "./pages/VerifyOtp";
 import SelectRole from "./pages/SelectRole";
 import Login from "./pages/Login";
+import DashboardLayout from "./pages/DashboardLayout";
+import GroupAdminHome from "./pages/group-admin/Home";
+import Subscriptions from "./pages/group-admin/Subscriptions";
+import Groups from "./pages/group-admin/Groups";
 
 function App() {
   return (
@@ -22,15 +26,18 @@ function App() {
         <Route path="/select-role" element={<SelectRole />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Placeholder for Dashboard */}
-        <Route
-          path="/dashboard"
-          element={
-            <div className="text-white text-center mt-20 text-3xl">
-              Dashboard Coming Soon 🚀
-            </div>
-          }
-        />
+        {/* Protected Dashboard Routes */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<GroupAdminHome />} />
+          <Route path="groups" element={<Groups />} />
+          <Route path="subscriptions" element={<Subscriptions />} />
+          <Route
+            path="settings"
+            element={
+              <div className="text-white p-8">Settings (Coming Soon)</div>
+            }
+          />
+        </Route>
       </Routes>
     </Router>
   );

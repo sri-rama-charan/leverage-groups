@@ -9,4 +9,19 @@ const api = axios.create({
   },
 });
 
+// BEST PRACTICE: Interceptor to attach Token automatically
+// This ensures we don't have to pass the token manually in every request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`; // Standard Bearer format
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 export default api;

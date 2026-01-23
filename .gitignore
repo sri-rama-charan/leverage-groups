@@ -64,3 +64,10 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
+
+# ==============================================================================
+# WhatsApp Session Data (CRITICAL!)
+# ==============================================================================
+# Contains authentication keys and session locks. Never sync this!
+.wwebjs_auth/
+**/.wwebjs_auth/

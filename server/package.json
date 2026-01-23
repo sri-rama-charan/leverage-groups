@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "clean": "node reset-session.js",
+    "kill": "taskkill /F /IM chrome.exe /T || exit 0",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push"
   },
@@ -23,10 +25,12 @@
     "morgan": "^1.10.0",
     "nodemailer": "^7.0.12",
     "pg": "^8.11.5",
+    "qrcode": "^1.5.4",
+    "whatsapp-web.js": "^1.34.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
+    "nodemon": "^3.1.11",
     "prisma": "^5.22.0"
   }
 }

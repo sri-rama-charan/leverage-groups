@@ -34,7 +34,6 @@ const SelectRole = () => {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      alert("Welcome to LeverageGroups! Dashboard coming soon.");
       navigate("/dashboard"); // Placeholder
     } catch (err) {
       alert("Error setting role. Try again.");
