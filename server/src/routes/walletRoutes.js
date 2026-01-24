@@ -6,6 +6,7 @@
 const express = require("express");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const walletController = require("../services/wallet/walletController");
+const brandWalletController = require("../services/wallet/brandWalletController");
 
 const router = express.Router();
 
@@ -27,3 +28,10 @@ router.get("/payout-history", authenticateToken, walletController.getPayoutHisto
 router.post("/request-payout", authenticateToken, walletController.requestPayout);
 
 module.exports = router;
+
+// ============ BRAND WALLET ROUTES (Auth Required) ============
+// Placed after export so existing imports continue to work; Express router can still attach
+router.get("/brand/summary", authenticateToken, brandWalletController.getBrandWalletSummary);
+router.get("/brand/transactions", authenticateToken, brandWalletController.getBrandTransactions);
+router.get("/brand/campaign-spend", authenticateToken, brandWalletController.getBrandCampaignSpend);
+router.post("/brand/add-money", authenticateToken, brandWalletController.addMoney);

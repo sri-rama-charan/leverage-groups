@@ -6,6 +6,9 @@ import {
   DollarSign,
   Settings,
   LogOut,
+  Target,
+  BarChart3,
+  Bookmark,
 } from "lucide-react";
 import api from "../api/axios"; // Import API client
 
@@ -13,10 +16,12 @@ import api from "../api/axios"; // Import API client
  * SIDEBAR COMPONENT
  * This is the navigation menu on the left side of the dashboard.
  * It contains links to different pages and the Logout button.
+ * Supports both Group Admin (GA) and Brand (BR) roles.
  */
 const Sidebar = () => {
   const location = useLocation(); // To know which page is active
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // Handle Logout
   const handleLogout = async () => {
@@ -36,7 +41,7 @@ const Sidebar = () => {
   };
 
   // List of Links for Group Admins
-  const links = [
+  const gaLinks = [
     {
       name: "Dashboard",
       path: "/dashboard",
@@ -59,6 +64,43 @@ const Sidebar = () => {
       icon: <Settings size={20} />,
     },
   ];
+
+  // List of Links for Brands
+  const brandLinks = [
+    {
+      name: "Dashboard",
+      path: "/dashboard",
+      icon: <LayoutDashboard size={20} />,
+    },
+    {
+      name: "Groups",
+      path: "/dashboard/groups",
+      icon: <Users size={20} />,
+    },
+    {
+      name: "Saved",
+      path: "/dashboard/saved",
+      icon: <Bookmark size={20} />,
+    },
+    {
+      name: "Campaigns",
+      path: "/dashboard/campaigns",
+      icon: <Target size={20} />,
+    },
+    {
+      name: "Wallet",
+      path: "/dashboard/wallet",
+      icon: <DollarSign size={20} />,
+    },
+    {
+      name: "Settings",
+      path: "/dashboard/settings",
+      icon: <Settings size={20} />,
+    },
+  ];
+
+  // Select links based on user role
+  const links = user.role === "BR" ? brandLinks : gaLinks;
 
   return (
     <div className="w-64 bg-mvp-card border-r border-mvp-border flex flex-col h-screen fixed left-0 top-0">

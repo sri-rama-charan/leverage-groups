@@ -6,9 +6,13 @@ const {
   importGroup,
   deleteGroup,
   updateGroup,
+  listAvailableGroups,
 } = require("../services/group/groupController");
 
 // All routes here are scoped to /api/groups
+
+// GET /api/groups/available - List all available groups for brands
+router.get("/available", listAvailableGroups);
 
 // GET /api/groups - List all my groups
 router.get("/", authenticateToken, listGroups);

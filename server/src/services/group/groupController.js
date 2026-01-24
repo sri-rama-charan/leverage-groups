@@ -226,5 +226,56 @@ const deleteGroup = async (req, res) => {
   }
 };
 
+// GET ALL AVAILABLE GROUPS FOR BRANDS
+// Returns all groups from all Group Admins (for brands to browse and select)
+const listAvailableGroups = async (req, res) => {
+  try {
+    const groups = await prisma.group.findMany({
+      where: {
+        monetizationEnabled: true, // Only show groups that have monetization enabled
+        verificationStatus: "VERIFIED", // Only verified groups
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: { select: { members: true } },
+      },
+    });
+
+    const formattedGroups = groups.map((g) => ({
+      id: g.id,
+      groupName: g.groupName,
+      whatsappGroupId: g.whatsappGroupId,
+      inviteLink: g.inviteLink,
+      tags: g.tags,
+      pricePerMessage: g.pricePerMessage,
+      scrapedMemberCount: g.scrapedMemberCount || g._count.members,
+      dailyMessageCap: g.dailyCap,
+      verificationStatus: g.verificationStatus,
+      monetizationEnabled: g.monetizationEnabled,
+      lastSyncedAt: g.lastSyncedAt,
+      createdAt: g.createdAt,
+      updatedAt: g.updatedAt,
+      memberCount: g._count.members,
+      admin: g.admin,
+    }));
+
+    res.json({
+      success: true,
+      total: formattedGroups.length,
+      groups: formattedGroups,
+    });
+  } catch (error) {
+    console.error("Error fetching available groups:", error);
+    res.status(500).json({ error: "Failed to fetch available groups." });
+  }
+};
+
 // Export all functions so other files can use them
-module.exports = { listGroups, importGroup, updateGroup, deleteGroup };
+module.exports = { listGroups, importGroup, updateGroup, deleteGroup, listAvailableGroups };

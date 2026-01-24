@@ -13,9 +13,22 @@ import GroupAdminHome from "./pages/group-admin/Home";
 import Subscriptions from "./pages/group-admin/Subscriptions";
 import Groups from "./pages/group-admin/Groups";
 import Wallet from "./pages/group-admin/Wallet";
+import BrandWallet from "./pages/brand/Wallet";
 import Settings from "./pages/group-admin/Settings";
+import BrandHome from "./pages/brand/Home";
+import BrandGroups from "./pages/brand/Groups";
+import BrandSaved from "./pages/brand/Saved";
 
 function App() {
+  const getGroupsElement = () => {
+    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
+    return user?.role === "BR" ? <BrandGroups /> : <Groups />;
+  };
+  const getWalletElement = () => {
+    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
+    return user?.role === "BR" ? <BrandWallet /> : <Wallet />;
+  };
+
   return (
     <Router>
       <Routes>
@@ -30,10 +43,24 @@ function App() {
 
         {/* Protected Dashboard Routes */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<GroupAdminHome />} />
-          <Route path="groups" element={<Groups />} />
-          <Route path="wallet" element={<Wallet />} />
+          {/* Determine which home to show based on role */}
+          <Route index element={
+            localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).role === "BR" 
+              ? <BrandHome /> 
+              : <GroupAdminHome />
+          } />
+          
+          {/* Groups Route - Shows different page based on role */}
+          <Route path="groups" element={getGroupsElement()} />
+          
+          {/* Wallet route - Shows different page based on role */}
+          <Route path="wallet" element={getWalletElement()} />
           <Route path="subscriptions" element={<Subscriptions />} />
+          
+          {/* Brand only routes */}
+          <Route path="saved" element={<BrandSaved />} />
+          
+          {/* Both GA and Brand use Settings */}
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
