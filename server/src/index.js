@@ -41,12 +41,13 @@ app.get("/", (req, res) => {
 });
 
 // Import other routes
-// Import other routes
 const groupRoutes = require("./routes/groupRoutes");
 const whatsappRoutes = require("./routes/whatsappRoutes");
+const walletRoutes = require("./routes/walletRoutes");
 
 app.use("/api/groups", groupRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
+app.use("/api/wallet", walletRoutes);
 
 // 5. Start the Server
 // This tells the computer to listen for incoming connections on the specific PORT

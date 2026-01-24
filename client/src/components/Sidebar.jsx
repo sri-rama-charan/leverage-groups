@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Users,
   CreditCard,
+  DollarSign,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -42,6 +43,11 @@ const Sidebar = () => {
       icon: <LayoutDashboard size={20} />,
     },
     { name: "My Groups", path: "/dashboard/groups", icon: <Users size={20} /> },
+    {
+      name: "Wallet",
+      path: "/dashboard/wallet",
+      icon: <DollarSign size={20} />,
+    },
     {
       name: "Subscriptions",
       path: "/dashboard/subscriptions",

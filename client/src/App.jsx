@@ -12,6 +12,8 @@ import DashboardLayout from "./pages/DashboardLayout";
 import GroupAdminHome from "./pages/group-admin/Home";
 import Subscriptions from "./pages/group-admin/Subscriptions";
 import Groups from "./pages/group-admin/Groups";
+import Wallet from "./pages/group-admin/Wallet";
+import Settings from "./pages/group-admin/Settings";
 
 function App() {
   return (
@@ -30,13 +32,9 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<GroupAdminHome />} />
           <Route path="groups" element={<Groups />} />
+          <Route path="wallet" element={<Wallet />} />
           <Route path="subscriptions" element={<Subscriptions />} />
-          <Route
-            path="settings"
-            element={
-              <div className="text-white p-8">Settings (Coming Soon)</div>
-            }
-          />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
