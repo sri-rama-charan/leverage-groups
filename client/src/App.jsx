@@ -4,6 +4,8 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Register from "./pages/Register";
 import VerifyOtp from "./pages/VerifyOtp";
 import SelectRole from "./pages/SelectRole";
@@ -18,53 +20,69 @@ import Settings from "./pages/group-admin/Settings";
 import BrandHome from "./pages/brand/Home";
 import BrandGroups from "./pages/brand/Groups";
 import BrandSaved from "./pages/brand/Saved";
+import RoleDashboard from "./components/RoleDashboard";
 
 function App() {
-  const getGroupsElement = () => {
-    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
-    return user?.role === "BR" ? <BrandGroups /> : <Groups />;
-  };
-  const getWalletElement = () => {
-    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
-    return user?.role === "BR" ? <BrandWallet /> : <Wallet />;
-  };
-
   return (
-    <Router>
-      <Routes>
-        {/* Redirect root to Login for now */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Redirect root to Login for now */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Auth Routes */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/select-role" element={<SelectRole />} />
-        <Route path="/login" element={<Login />} />
+          {/* Auth Routes */}
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/select-role" element={<SelectRole />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected Dashboard Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          {/* Determine which home to show based on role */}
-          <Route index element={
-            localStorage.getItem("user") && JSON.parse(localStorage.getItem("user")).role === "BR" 
-              ? <BrandHome /> 
-              : <GroupAdminHome />
-          } />
-          
-          {/* Groups Route - Shows different page based on role */}
-          <Route path="groups" element={getGroupsElement()} />
-          
-          {/* Wallet route - Shows different page based on role */}
-          <Route path="wallet" element={getWalletElement()} />
-          <Route path="subscriptions" element={<Subscriptions />} />
-          
-          {/* Brand only routes */}
-          <Route path="saved" element={<BrandSaved />} />
-          
-          {/* Both GA and Brand use Settings */}
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </Router>
+          {/* Protected Dashboard Routes (wrapper style for nested routes) */}
+          <Route element={<ProtectedRoute allowedRoles={["GA", "BR"]} />}>
+            <Route 
+              path="/dashboard" 
+              element={<DashboardLayout />}
+            >
+              {/* Dashboard Home - Role-based component */}
+              <Route index element={<RoleDashboard />} />
+
+              {/* Group Admin Only Routes */}
+              <Route 
+                path="groups" 
+                element={<ProtectedRoute element={<Groups />} allowedRoles="GA" />} 
+              />
+              <Route 
+                path="wallet" 
+                element={<ProtectedRoute element={<Wallet />} allowedRoles="GA" />} 
+              />
+              <Route 
+                path="subscriptions" 
+                element={<ProtectedRoute element={<Subscriptions />} allowedRoles="GA" />} 
+              />
+
+              {/* Brand Only Routes */}
+              <Route 
+                path="brand/groups" 
+                element={<ProtectedRoute element={<BrandGroups />} allowedRoles="BR" />} 
+              />
+              <Route 
+                path="brand/wallet" 
+                element={<ProtectedRoute element={<BrandWallet />} allowedRoles="BR" />} 
+              />
+              <Route 
+                path="brand/saved" 
+                element={<ProtectedRoute element={<BrandSaved />} allowedRoles="BR" />} 
+              />
+
+              {/* Shared Routes (accessible by both roles) */}
+              <Route 
+                path="settings" 
+                element={<ProtectedRoute element={<Settings />} allowedRoles={["GA", "BR"]} />} 
+              />
+            </Route>
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

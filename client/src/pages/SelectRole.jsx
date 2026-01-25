@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Users, Briefcase, CheckCircle } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 
 const SelectRole = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState(null); // 'GA' or 'BR'
 
@@ -32,7 +34,9 @@ const SelectRole = () => {
 
       // Save the Token!
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      
+        // Update user state via AuthContext
+        login(response.data.user);
 
       navigate("/dashboard"); // Placeholder
     } catch (err) {

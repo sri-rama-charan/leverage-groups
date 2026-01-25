@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Lock, Phone } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
@@ -17,8 +19,11 @@ const Login = () => {
     try {
       const response = await api.post("/auth/login", formData);
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+        // Store token in localStorage
+        localStorage.setItem("token", response.data.token);
+      
+        // Update user state via AuthContext
+        login(response.data.user);
 
       navigate("/dashboard");
     } catch (err) {

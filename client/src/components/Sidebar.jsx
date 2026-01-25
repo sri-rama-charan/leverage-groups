@@ -10,6 +10,7 @@ import {
   BarChart3,
   Bookmark,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/axios"; // Import API client
 
 /**
@@ -21,7 +22,7 @@ import api from "../api/axios"; // Import API client
 const Sidebar = () => {
   const location = useLocation(); // To know which page is active
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const { user, logout } = useAuth();
 
   // Handle Logout
   const handleLogout = async () => {
@@ -32,11 +33,10 @@ const Sidebar = () => {
       console.warn("Backend logout failed, forcing local logout:", err);
     }
 
-    // 2. Remove the "VIP Pass" (Token) from user's browser
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+      // 2. Logout using AuthContext (removes token and user data)
+      logout();
 
-    // 3. Send them back to the Login page
+      // 3. Send them back to the Login page
     navigate("/login");
   };
 
@@ -74,12 +74,12 @@ const Sidebar = () => {
     },
     {
       name: "Groups",
-      path: "/dashboard/groups",
+        path: "/dashboard/brand/groups",
       icon: <Users size={20} />,
     },
     {
       name: "Saved",
-      path: "/dashboard/saved",
+        path: "/dashboard/brand/saved",
       icon: <Bookmark size={20} />,
     },
     {
@@ -89,7 +89,7 @@ const Sidebar = () => {
     },
     {
       name: "Wallet",
-      path: "/dashboard/wallet",
+        path: "/dashboard/brand/wallet",
       icon: <DollarSign size={20} />,
     },
     {
@@ -100,7 +100,7 @@ const Sidebar = () => {
   ];
 
   // Select links based on user role
-  const links = user.role === "BR" ? brandLinks : gaLinks;
+    const links = user?.role === "BR" ? brandLinks : gaLinks;
 
   return (
     <div className="w-64 bg-mvp-card border-r border-mvp-border flex flex-col h-screen fixed left-0 top-0">

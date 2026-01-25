@@ -17,6 +17,8 @@ const DashboardLayout = () => {
       {/* We add 'ml-64' because the sidebar is 64 units (256px) wide */}
       <main className="flex-1 ml-64 p-8">
         <div className="max-w-6xl mx-auto">
+          {/* Debug banner to verify layout render */}
+          <div className="mb-4 text-xs text-mvp-sub">Layout active</div>
           {/* This is where the specific page content renders */}
           <Outlet />
         </div>

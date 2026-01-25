@@ -16,9 +16,11 @@ import {
   MapPin,
   FileText,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 
 const Settings = () => {
+  const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -66,7 +68,6 @@ const Settings = () => {
 
   const fetchUserData = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
       if (user) {
         setProfileData({
           name: user.name || "",
@@ -89,9 +90,8 @@ const Settings = () => {
     try {
       const response = await api.put("/auth/profile", profileData);
       
-      // Update local storage
-      const user = JSON.parse(localStorage.getItem("user"));
-      localStorage.setItem("user", JSON.stringify({ ...user, ...profileData }));
+        // Update user via AuthContext
+        updateUser({ ...user, ...profileData });
 
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (err) {
