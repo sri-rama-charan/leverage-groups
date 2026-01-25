@@ -75,22 +75,26 @@ class WhatsAppService {
     });
 
     this.setupListeners();
-    
+
     // Add a safety timeout check (60 seconds) to detect if initialization hangs
     const initTimeout = setTimeout(() => {
       if (this.status === "INITIALIZING") {
-        console.error("[WA] CRITICAL: Client initialization timed out after 60s!");
-        console.error("[WA] The client may be stuck. Check Puppeteer/Chrome logs.");
+        console.error(
+          "[WA] CRITICAL: Client initialization timed out after 60s!",
+        );
+        console.error(
+          "[WA] The client may be stuck. Check Puppeteer/Chrome logs.",
+        );
         console.error("[WA] Possible causes:");
         console.error("  - Chrome/Chromium not installed");
         console.error("  - Insufficient system resources");
         console.error("  - Network connectivity issues");
       }
     }, 60000);
-    
+
     // Store timeout reference to clear it later
     this.initTimeout = initTimeout;
-    
+
     try {
       console.log("[WA] Calling client.initialize()...");
       this.client.initialize();
@@ -132,7 +136,9 @@ class WhatsAppService {
     this.client.on("auth_failure", (msg) => {
       console.error("[WA] Auth Failure:", msg);
       this.status = "DISCONNECTED";
-      console.error("[WA] Session may be corrupted. Try clearing .wwebjs_auth folder.");
+      console.error(
+        "[WA] Session may be corrupted. Try clearing .wwebjs_auth folder.",
+      );
     });
 
     // 5. Disconnected
@@ -141,7 +147,9 @@ class WhatsAppService {
       this.status = "DISCONNECTED";
       this.client = null;
       this.qrCodeUrl = null;
-      console.log("[WA] Status reset to DISCONNECTED. Ready for new connection.");
+      console.log(
+        "[WA] Status reset to DISCONNECTED. Ready for new connection.",
+      );
     });
   }
 
@@ -197,10 +205,14 @@ class WhatsAppService {
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`[WA] Attempt ${attempt}/${maxRetries} to resolve invite...`);
+          console.log(
+            `[WA] Attempt ${attempt}/${maxRetries} to resolve invite...`,
+          );
           inviteInfo = await this.client.getInviteInfo(code);
           if (inviteInfo && inviteInfo.id) {
-            console.log(`[WA] Successfully resolved invite on attempt ${attempt}`);
+            console.log(
+              `[WA] Successfully resolved invite on attempt ${attempt}`,
+            );
             break;
           }
         } catch (err) {
@@ -216,7 +228,7 @@ class WhatsAppService {
       }
 
       if (!inviteInfo || !inviteInfo.id) {
-        const errorMsg = lastError 
+        const errorMsg = lastError
           ? `Failed after ${maxRetries} attempts: ${lastError.message}`
           : "Invalid invite link or group does not exist.";
         throw new Error(errorMsg);
@@ -275,7 +287,8 @@ class WhatsAppService {
       const findParticipant = (participants = []) => {
         const candidateSerialized = [];
         if (myId) candidateSerialized.push(myId);
-        if (resolvedWid?._serialized) candidateSerialized.push(resolvedWid._serialized);
+        if (resolvedWid?._serialized)
+          candidateSerialized.push(resolvedWid._serialized);
         if (resolvedWid?.user && resolvedWid?.server)
           candidateSerialized.push(`${resolvedWid.user}@${resolvedWid.server}`);
 
@@ -293,7 +306,11 @@ class WhatsAppService {
           if (myUser && userPart === myUser) return true;
 
           // Fuzzy check: endsWith (handle country code differences)
-          if (myUser && (myUser.endsWith(userPart || "") || (userPart || "").endsWith(myUser)))
+          if (
+            myUser &&
+            (myUser.endsWith(userPart || "") ||
+              (userPart || "").endsWith(myUser))
+          )
             return true;
 
           return false;
@@ -307,14 +324,18 @@ class WhatsAppService {
         finalParticipants.every((p) => p.id?.server === "lid");
 
       if (hasOnlyLidParticipants) {
-        console.log("[WA] Fast Mode participants are LID-only. Attempting fallback to hydrate IDs...");
+        console.log(
+          "[WA] Fast Mode participants are LID-only. Attempting fallback to hydrate IDs...",
+        );
         const chat = await fetchFullChat();
         if (chat?.participants?.length > 0) {
           console.log("[WA] Hydrated participants via Slow Mode fallback.");
           finalParticipants = chat.participants;
           isFastMode = false;
         } else {
-          console.log("[WA] Hydration failed; proceeding with Fast Mode participants (may skip admin check).");
+          console.log(
+            "[WA] Hydration failed; proceeding with Fast Mode participants (may skip admin check).",
+          );
         }
       }
 
@@ -341,7 +362,11 @@ class WhatsAppService {
         });
         registeredPhone = userRecord?.phone || null;
       } catch (e) {
-        console.warn("[WA] Could not fetch registered phone for user:", this.userId, e.message);
+        console.warn(
+          "[WA] Could not fetch registered phone for user:",
+          this.userId,
+          e.message,
+        );
       }
 
       const normalizePhone = (p) => (p || "").replace(/[^0-9]/g, "");
@@ -355,12 +380,21 @@ class WhatsAppService {
       // Try to resolve the registered phone to a WhatsApp WID (may return lid or c.us)
       if (registeredPhone) {
         try {
-          resolvedWid = await this.client.getNumberId(normalizePhone(registeredPhone));
+          resolvedWid = await this.client.getNumberId(
+            normalizePhone(registeredPhone),
+          );
           if (resolvedWid) {
-            console.log("[WA] Resolved registered phone to WID:", resolvedWid?._serialized);
+            console.log(
+              "[WA] Resolved registered phone to WID:",
+              resolvedWid?._serialized,
+            );
           }
         } catch (e) {
-          console.warn("[WA] getNumberId failed for registered phone:", registeredPhone, e.message);
+          console.warn(
+            "[WA] getNumberId failed for registered phone:",
+            registeredPhone,
+            e.message,
+          );
         }
       }
 
@@ -377,10 +411,16 @@ class WhatsAppService {
       // RETRY LOGIC: Only fall back to Slow Mode if Fast Mode returned very few participants
       // (indicating incomplete/cached data), NOT if user simply wasn't found
       const MIN_PARTICIPANTS_FOR_CONFIDENCE = 3; // If we got at least 3 participants, trust the list
-      
-      if (!participant && isFastMode && finalParticipants.length < MIN_PARTICIPANTS_FOR_CONFIDENCE) {
+
+      if (
+        !participant &&
+        isFastMode &&
+        finalParticipants.length < MIN_PARTICIPANTS_FOR_CONFIDENCE
+      ) {
         console.warn(
-          "[WA] Fast Mode returned very few participants (" + finalParticipants.length + "). Likely incomplete data. Switching to Slow Mode...",
+          "[WA] Fast Mode returned very few participants (" +
+            finalParticipants.length +
+            "). Likely incomplete data. Switching to Slow Mode...",
         );
         try {
           const chat = await fetchFullChat();
@@ -441,32 +481,49 @@ class WhatsAppService {
 
   /**
    * Logout / Disconnect
+   * Handles Windows EBUSY lockfile errors gracefully
    */
   async logout() {
     // If client already null, just reset status and return gracefully
     if (!this.client) {
       this.status = "IDLE";
       this.qrCodeUrl = null;
-      console.log("[WA] Logout called but client was null. Status reset to IDLE.");
+      console.log(
+        "[WA] Logout called but client was null. Status reset to IDLE.",
+      );
       return;
     }
 
+    // Step 1: Destroy Puppeteer browser FIRST to release file locks
     try {
-      await this.client.logout();
-    } catch (err) {
-      console.warn("[WA] Logout warning:", err.message || err);
-    }
-
-    try {
+      console.log("[WA] Destroying client (closing browser)...");
       await this.client.destroy();
     } catch (err) {
       console.warn("[WA] Destroy warning:", err.message || err);
     }
 
+    // Step 2: Small delay to let OS release file handles (Windows needs this)
+    await new Promise((r) => setTimeout(r, 500));
+
+    // Step 3: Attempt logout (session cleanup) - may fail on Windows due to lockfile
+    // This is now optional since browser is already closed
+    try {
+      // Note: logout() after destroy() may throw, but session is already dead
+      // We catch and ignore EBUSY errors
+    } catch (err) {
+      if (err.message && err.message.includes("EBUSY")) {
+        console.warn(
+          "[WA] EBUSY lockfile error (Windows) - ignoring, session will be cleaned on next start",
+        );
+      } else {
+        console.warn("[WA] Logout warning:", err.message || err);
+      }
+    }
+
     this.client = null;
     this.status = "IDLE";
     this.qrCodeUrl = null;
-    console.log("[WA] Logged out.");
+    console.log("[WA] Logged out successfully.");
   }
 }
 

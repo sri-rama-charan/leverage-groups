@@ -129,11 +129,17 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
           setWaStatus(status);
           if (qrCodeUrl) {
             setQrCode(qrCodeUrl);
-            setQrSeen(true);
+            if (!qrSeen) {
+              setQrSeen(true);
+            }
           } else {
-            // If QR was shown and now gone but status not yet AUTH/READY, assume scan in progress
-            if (qrSeen && status === "QR_READY" && !showProgress) {
+            // QR was shown but now gone = user has scanned, show loading immediately!
+            if (qrSeen && !showProgress) {
+              console.log(
+                "[AddGroupWizard] QR disappeared - scan detected, showing progress",
+              );
               setShowProgress(true);
+              setQrCode(null);
             }
           }
 
