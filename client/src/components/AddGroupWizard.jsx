@@ -78,23 +78,40 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
       // Determine error type and set appropriate message based on exact error text
       if (errorMsg.includes("NOT an Admin")) {
         setErrorType("not-admin");
-        setError("You are not an admin of this WhatsApp group. Only group admins can import groups to the platform.");
+        setError(
+          "You are not an admin of this WhatsApp group. Only group admins can import groups to the platform.",
+        );
       } else if (errorMsg.includes("not a member")) {
         setErrorType("not-member");
-        setError("You are not a member of this group. Please join the group first or verify you're using the correct WhatsApp account.");
-      } else if (errorMsg.includes("not READY") || errorMsg.includes("not connected") || statusCode === 503) {
+        setError(
+          "You are not a member of this group. Please join the group first or verify you're using the correct WhatsApp account.",
+        );
+      } else if (
+        errorMsg.includes("not READY") ||
+        errorMsg.includes("not connected") ||
+        statusCode === 503
+      ) {
         setErrorType("connection");
-        setError("WhatsApp connection is not ready. Please scan the QR code and wait for connection to establish.");
+        setError(
+          "WhatsApp connection is not ready. Please scan the QR code and wait for connection to establish.",
+        );
       } else if (errorMsg.includes("private chat")) {
         setErrorType("general");
-        setError("This link points to a private chat, not a group. Please use a valid group invite link.");
+        setError(
+          "This link points to a private chat, not a group. Please use a valid group invite link.",
+        );
       } else if (statusCode === 403) {
         // 403 means user permission issue (not admin or not member)
         setErrorType("not-member");
-        setError("You don't have access to this group. Make sure you're using the correct WhatsApp account.");
+        setError(
+          "You don't have access to this group. Make sure you're using the correct WhatsApp account.",
+        );
       } else {
         setErrorType("general");
-        setError(errorMsg || "Could not verify group. Please check the link and try again.");
+        setError(
+          errorMsg ||
+            "Could not verify group. Please check the link and try again.",
+        );
       }
     } finally {
       setLoading(false);
@@ -152,13 +169,31 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
-      // Start connection
+      // OPTIMIZATION: First check if WhatsApp is already connected
+      const statusRes = await api.get("/whatsapp/status");
+      const currentStatus = statusRes.data.status;
+
+      if (currentStatus === "READY") {
+        // Already connected! Skip QR and go directly to lookup
+        console.log("[AddGroupWizard] WhatsApp already READY, skipping QR");
+        setWaStatus("READY");
+        setShowProgress(true);
+        setStep(2); // Show progress view
+        // Trigger lookup directly
+        handleLookupGroup();
+        return;
+      }
+
+      // Not connected yet - start connection and show QR
       await api.post("/whatsapp/connect");
       setStep(2); // Go to QR/Scan mode
       // Keep showProgress false - we'll show QR first, then progress after scan
     } catch (err) {
       setErrorType("connection");
-      setError(err.response?.data?.error || "Could not start WhatsApp connection. Please try again.");
+      setError(
+        err.response?.data?.error ||
+          "Could not start WhatsApp connection. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -205,7 +240,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
       const errorMsg = err.response?.data?.error || "";
       setErrorType("general");
       if (errorMsg.includes("already exists")) {
-        setError("This group has already been imported. Please check your groups list.");
+        setError(
+          "This group has already been imported. Please check your groups list.",
+        );
       } else {
         setError(errorMsg || "Failed to save group. Please try again.");
       }
@@ -242,24 +279,36 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
           {error && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 mb-6">
               <div className="flex items-start gap-3">
-                <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <AlertCircle
+                  size={20}
+                  className="text-red-500 flex-shrink-0 mt-0.5"
+                />
                 <div className="flex-1">
                   <h4 className="text-red-500 font-semibold text-sm mb-1">
-                    {errorType === 'not-admin' && '❌ Not an Admin'}
-                    {errorType === 'not-member' && '❌ Not a Member'}
-                    {errorType === 'connection' && '⚠️ Connection Issue'}
-                    {errorType === 'general' && '⚠️ Error'}
+                    {errorType === "not-admin" && "❌ Not an Admin"}
+                    {errorType === "not-member" && "❌ Not a Member"}
+                    {errorType === "connection" && "⚠️ Connection Issue"}
+                    {errorType === "general" && "⚠️ Error"}
                   </h4>
-                  <p className="text-red-400 text-sm leading-relaxed">{error}</p>
-                  
+                  <p className="text-red-400 text-sm leading-relaxed">
+                    {error}
+                  </p>
+
                   {/* Helpful actions based on error type */}
-                  {errorType === 'not-admin' && (
+                  {errorType === "not-admin" && (
                     <div className="mt-3 p-3 bg-red-500/5 rounded border border-red-500/20">
-                      <p className="text-xs text-red-300 mb-2">💡 <strong>What can I do?</strong></p>
+                      <p className="text-xs text-red-300 mb-2">
+                        💡 <strong>What can I do?</strong>
+                      </p>
                       <ul className="text-xs text-red-300/80 space-y-1 list-disc list-inside">
                         <li>Ask a group admin to make you an admin</li>
-                        <li>Try scanning with a different WhatsApp account that's an admin</li>
-                        <li>Create or manage a group where you're already an admin</li>
+                        <li>
+                          Try scanning with a different WhatsApp account that's
+                          an admin
+                        </li>
+                        <li>
+                          Create or manage a group where you're already an admin
+                        </li>
                       </ul>
                       <button
                         onClick={handleRetry}
@@ -269,10 +318,12 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                       </button>
                     </div>
                   )}
-                  
-                  {errorType === 'not-member' && (
+
+                  {errorType === "not-member" && (
                     <div className="mt-3 p-3 bg-red-500/5 rounded border border-red-500/20">
-                      <p className="text-xs text-red-300 mb-2">💡 <strong>What can I do?</strong></p>
+                      <p className="text-xs text-red-300 mb-2">
+                        💡 <strong>What can I do?</strong>
+                      </p>
                       <ul className="text-xs text-red-300/80 space-y-1 list-disc list-inside">
                         <li>Join the group using the invite link first</li>
                         <li>Ask the group admin to add you</li>
@@ -286,10 +337,12 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                       </button>
                     </div>
                   )}
-                  
-                  {errorType === 'connection' && (
+
+                  {errorType === "connection" && (
                     <div className="mt-3 p-3 bg-red-500/5 rounded border border-red-500/20">
-                      <p className="text-xs text-red-300 mb-2">💡 <strong>What can I do?</strong></p>
+                      <p className="text-xs text-red-300 mb-2">
+                        💡 <strong>What can I do?</strong>
+                      </p>
                       <ul className="text-xs text-red-300/80 space-y-1 list-disc list-inside">
                         <li>Scan the QR code again with WhatsApp</li>
                         <li>Wait for your phone to show "Logged in"</li>
@@ -303,8 +356,8 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                       </button>
                     </div>
                   )}
-                  
-                  {errorType === 'general' && (
+
+                  {errorType === "general" && (
                     <button
                       onClick={handleRetry}
                       className="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium rounded border border-red-500/30 transition-colors"
@@ -349,29 +402,52 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
           {step === 2 && (
             <div className="text-center space-y-6">
               {/* Scenario 1: Progress view shown immediately after scan/auth */}
-              {showProgress || loading || waStatus === "READY" || waStatus === "AUTHENTICATED" ? (
+              {showProgress ||
+              loading ||
+              waStatus === "READY" ||
+              waStatus === "AUTHENTICATED" ? (
                 <div className="flex flex-col items-center justify-center py-8">
                   <div className="w-12 h-12 border-4 border-brand-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <h3 className="text-lg font-bold text-white">Preparing Your Group</h3>
-                  <p className="text-mvp-sub text-sm">This takes a moment. We'll handle everything for you.</p>
+                  <h3 className="text-lg font-bold text-white">
+                    Preparing Your Group
+                  </h3>
+                  <p className="text-mvp-sub text-sm">
+                    This takes a moment. We'll handle everything for you.
+                  </p>
 
                   {/* Progress checklist */}
                   <div className="mt-6 w-full max-w-sm text-left mx-auto space-y-2">
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border ${waStatus === "AUTHENTICATED" || waStatus === "READY" ? "border-brand-accent" : "border-mvp-border"} ${waStatus === "AUTHENTICATED" ? "bg-brand-accent/40" : ""}`}></div>
-                      <span className="text-sm text-gray-300">Connecting to WhatsApp</span>
+                      <div
+                        className={`w-5 h-5 rounded-full border ${waStatus === "AUTHENTICATED" || waStatus === "READY" ? "border-brand-accent" : "border-mvp-border"} ${waStatus === "AUTHENTICATED" ? "bg-brand-accent/40" : ""}`}
+                      ></div>
+                      <span className="text-sm text-gray-300">
+                        Connecting to WhatsApp
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border ${loading ? "border-brand-accent" : "border-mvp-border"} ${loading ? "bg-brand-accent/40" : ""}`}></div>
-                      <span className="text-sm text-gray-300">Resolving invite link</span>
+                      <div
+                        className={`w-5 h-5 rounded-full border ${loading ? "border-brand-accent" : "border-mvp-border"} ${loading ? "bg-brand-accent/40" : ""}`}
+                      ></div>
+                      <span className="text-sm text-gray-300">
+                        Resolving invite link
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border ${loading ? "border-brand-accent" : "border-mvp-border"}`}></div>
-                      <span className="text-sm text-gray-300">Verifying admin access</span>
+                      <div
+                        className={`w-5 h-5 rounded-full border ${loading ? "border-brand-accent" : "border-mvp-border"}`}
+                      ></div>
+                      <span className="text-sm text-gray-300">
+                        Verifying admin access
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border ${loading ? "border-brand-accent" : "border-mvp-border"}`}></div>
-                      <span className="text-sm text-gray-300">Syncing participants</span>
+                      <div
+                        className={`w-5 h-5 rounded-full border ${loading ? "border-brand-accent" : "border-mvp-border"}`}
+                      ></div>
+                      <span className="text-sm text-gray-300">
+                        Syncing participants
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -381,7 +457,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                   <h3 className="text-lg font-bold">Connect WhatsApp</h3>
 
                   {waStatus === "INITIALIZING" && (
-                    <div className="animate-pulse text-gray-400">Initializing Client...</div>
+                    <div className="animate-pulse text-gray-400">
+                      Initializing Client...
+                    </div>
                   )}
 
                   {qrCode && waStatus === "QR_READY" && (
@@ -389,7 +467,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                       <img src={qrCode} alt="Scan QR" className="w-48 h-48" />
                     </div>
                   )}
-                  <p className="text-xs text-mvp-sub">Scan with the WhatsApp account that is Admin of the group.</p>
+                  <p className="text-xs text-mvp-sub">
+                    Scan with the WhatsApp account that is Admin of the group.
+                  </p>
                 </>
               )}
             </div>
@@ -403,7 +483,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                   {foundGroup.name?.[0] || "?"}
                 </div>
                 <div>
-                  <h3 className="font-bold">{foundGroup.name || "Unnamed Group"}</h3>
+                  <h3 className="font-bold">
+                    {foundGroup.name || "Unnamed Group"}
+                  </h3>
                   <p className="text-sm text-mvp-sub">
                     {foundGroup.memberCount} Members • You are Admin
                   </p>
@@ -414,7 +496,10 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-300">
-                    Group Tags <span className="text-gray-500">(e.g., city, interest, profession)</span>
+                    Group Tags{" "}
+                    <span className="text-gray-500">
+                      (e.g., city, interest, profession)
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -425,7 +510,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                       setConfig({ ...config, tags: e.target.value })
                     }
                   />
-                  <p className="text-xs text-gray-500">Separate multiple tags with commas</p>
+                  <p className="text-xs text-gray-500">
+                    Separate multiple tags with commas
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -448,7 +535,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                     />
                     <span className="text-sm text-gray-400">messages/day</span>
                   </div>
-                  <p className="text-xs text-gray-500">Maximum paid messages each member receives per day</p>
+                  <p className="text-xs text-gray-500">
+                    Maximum paid messages each member receives per day
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -468,7 +557,9 @@ const AddGroupWizard = ({ isOpen, onClose, onSuccess }) => {
                       })
                     }
                   />
-                  <p className="text-xs text-gray-500">Amount brands pay per message sent to members</p>
+                  <p className="text-xs text-gray-500">
+                    Amount brands pay per message sent to members
+                  </p>
                 </div>
               </div>
 
